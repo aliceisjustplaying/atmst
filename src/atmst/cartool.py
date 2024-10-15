@@ -48,6 +48,18 @@ def print_all_records(car_path: str, to_json: bool) -> None:
 		else:
 			print(f"{json.dumps(k)} -> {v.encode('base32')}")
 
+def get_posts_and_profiles(car_path: str):
+    bs, commit = open_car(car_path)
+    data_dict = {}
+    for path in ["app.bsky.feed.post/", "app.bsky.actor.profile/"]:
+        for k, v in NodeWalker(NodeStore(bs), commit["data"]).iter_kv_range(
+            path, path + NodeWalker.PATH_MAX
+        ):
+            record = decode_dag_cbor(bs.get_block(bytes(v)), atjson_mode=True)
+            record["cid"] = v.encode()
+            data_dict[k] = record
+    return data_dict
+
 def list_all(car_path: str):
 	print_all_records(car_path, to_json=False)
 
